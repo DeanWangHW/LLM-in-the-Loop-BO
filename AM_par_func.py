@@ -1,5 +1,6 @@
 """注释：3D 打印实验的并行 LLM 辅助 BO 工具与采样函数集合。"""
 
+
 import numpy as np  # 数值计算与数组类型
 from openai import OpenAI  # OpenAI 客户端，用于调用 LLM
 import json  # 解析与生成 JSON 字符串
