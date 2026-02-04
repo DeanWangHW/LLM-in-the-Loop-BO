@@ -1,3 +1,5 @@
+"""注释：超参数调优（HPT）任务的 LLM 代理与候选采样/建模逻辑。"""
+
 import openai
 import random
 import json

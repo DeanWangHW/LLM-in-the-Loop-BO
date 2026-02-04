@@ -1,3 +1,5 @@
+"""注释：黑盒优化（BBFO）任务的 LLM 代理与候选采样/建模逻辑。"""
+
 from helper_func import *
 import openai
 import random
