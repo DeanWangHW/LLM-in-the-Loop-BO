@@ -6,7 +6,7 @@ from tqdm import trange
 from helper_func import find_max_variance_bound, optimize_acqf_ucb, train_gp
 from LLM_agent_HPT import LLAMAGENT_L_HPT
 
-from .base import SearchGraph
+from .base import build_single_node_graph
 
 
 def run_justify(context):
@@ -65,4 +65,4 @@ def run_justify(context):
 
 
 def build_justify_graph():
-    return SearchGraph(name="justify", run_fn=run_justify)
+    return build_single_node_graph(name="justify", run_fn=run_justify)

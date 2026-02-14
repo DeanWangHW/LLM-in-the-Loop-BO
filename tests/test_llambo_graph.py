@@ -1,3 +1,7 @@
+import pytest
+
+pytest.importorskip("torch")
+
 from hpt_search_graphs.llambo_graph import build_llambo_graph
 
 

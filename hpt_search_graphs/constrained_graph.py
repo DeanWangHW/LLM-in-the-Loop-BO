@@ -6,7 +6,7 @@ from tqdm import trange
 from helper_func import find_gp_maximum, optimize_acqf_ucb, select_next_design_point_bound, train_gp
 from LLM_agent_HPT import LLAMAGENT_L_HPT, build_gp_model
 
-from .base import SearchGraph
+from .base import build_single_node_graph
 
 
 def run_constrained(context):
@@ -80,4 +80,4 @@ def run_constrained(context):
 
 
 def build_constrained_graph():
-    return SearchGraph(name="constrained", run_fn=run_constrained)
+    return build_single_node_graph(name="constrained", run_fn=run_constrained)

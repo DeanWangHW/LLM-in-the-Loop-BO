@@ -1,3 +1,7 @@
+import pytest
+
+pytest.importorskip("torch")
+
 from hpt_search_graphs.transient_graph import build_transient_graph
 
 

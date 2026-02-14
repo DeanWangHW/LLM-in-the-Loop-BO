@@ -4,7 +4,7 @@ from tqdm import trange
 
 from helper_func import generate_ini_data, optimize_acqf_ucb, train_gp
 
-from .base import SearchGraph
+from .base import build_single_node_graph
 
 
 def run_bo(context):
@@ -36,4 +36,4 @@ def run_bo(context):
 
 
 def build_bo_graph():
-    return SearchGraph(name="bo", run_fn=run_bo)
+    return build_single_node_graph(name="bo", run_fn=run_bo)

@@ -3,7 +3,7 @@ from tqdm import trange
 
 from LLM_agent_HPT import LLAMAGENT_L_HPT
 
-from .base import SearchGraph
+from .base import build_single_node_graph
 
 
 def run_llambo_l(context):
@@ -25,4 +25,4 @@ def run_llambo_l(context):
 
 
 def build_llambo_l_graph():
-    return SearchGraph(name="llambo_l", run_fn=run_llambo_l)
+    return build_single_node_graph(name="llambo_l", run_fn=run_llambo_l)

@@ -5,7 +5,7 @@ from tqdm import trange
 from helper_func import optimize_acqf_ucb, train_gp
 from LLM_agent_HPT import LLAMAGENT_L_HPT
 
-from .base import SearchGraph
+from .base import build_single_node_graph
 
 
 def run_transient(context):
@@ -51,4 +51,4 @@ def run_transient(context):
 
 
 def build_transient_graph():
-    return SearchGraph(name="transient", run_fn=run_transient)
+    return build_single_node_graph(name="transient", run_fn=run_transient)

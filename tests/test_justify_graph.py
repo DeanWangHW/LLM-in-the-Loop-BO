@@ -1,3 +1,7 @@
+import pytest
+
+pytest.importorskip("torch")
+
 import torch
 
 from hpt_search_graphs.justify_graph import build_justify_graph

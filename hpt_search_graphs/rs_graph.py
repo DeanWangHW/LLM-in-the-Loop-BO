@@ -4,7 +4,7 @@ from tqdm import trange
 
 from helper_func import generate_ini_data
 
-from .base import SearchGraph
+from .base import build_single_node_graph
 
 
 def run_rs(context):
@@ -26,4 +26,4 @@ def run_rs(context):
 
 
 def build_rs_graph():
-    return SearchGraph(name="rs", run_fn=run_rs)
+    return build_single_node_graph(name="rs", run_fn=run_rs)
