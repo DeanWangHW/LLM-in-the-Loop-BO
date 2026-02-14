@@ -17,7 +17,7 @@ class Ctx:
 
     @staticmethod
     def obj(x):
-        return float(torch.tensor(x, dtype=torch.float64).sum().item())
+        return float(torch.as_tensor(x, dtype=torch.float64).sum().item())
 
 
 def test_bo_graph(monkeypatch):
