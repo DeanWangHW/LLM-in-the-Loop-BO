@@ -4,26 +4,30 @@ from tqdm import trange
 
 from helper_func import generate_ini_data
 
-from .base import build_single_node_graph
+from .base import BaseHPTMethodGraph
 
 
-def run_rs(context):
-    regrets, histories = [], []
-    for _ in trange(context.T_rep, desc="RANDOM", disable=not context.verbose):
-        history = generate_ini_data(func=context.obj, n=context.T_ini, bounds=context.bounds)
-        regret = [np.min([y for _, y in history])]
-        for _ in range(context.T):
-            x = torch.rand(context.dim)
-            x = context.bounds[0] + (context.bounds[1] - context.bounds[0]) * x
-            x = x.tolist()
-            y = context.obj(x)
-            history.append((tuple(x), y))
-            regret.append(np.min([y for _, y in history]))
+class RSGraph(BaseHPTMethodGraph):
+    def __init__(self):
+        super().__init__(name="rs")
 
-        regrets.append(regret)
-        histories.append(history)
-    return histories, np.array(regrets)
+    def execute(self, context):
+        regrets, histories = [], []
+        for _ in trange(context.T_rep, desc="RANDOM", disable=not context.verbose):
+            history = generate_ini_data(func=context.obj, n=context.T_ini, bounds=context.bounds)
+            regret = [np.min([y for _, y in history])]
+            for _ in range(context.T):
+                x = torch.rand(context.dim)
+                x = context.bounds[0] + (context.bounds[1] - context.bounds[0]) * x
+                x = x.tolist()
+                y = context.obj(x)
+                history.append((tuple(x), y))
+                regret.append(np.min([y for _, y in history]))
+
+            regrets.append(regret)
+            histories.append(history)
+        return histories, np.array(regrets)
 
 
 def build_rs_graph():
-    return build_single_node_graph(name="rs", run_fn=run_rs)
+    return RSGraph()

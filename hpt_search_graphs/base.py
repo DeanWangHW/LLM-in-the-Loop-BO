@@ -1,5 +1,5 @@
-from dataclasses import dataclass
-from typing import Any, Callable, Dict
+from abc import ABC, abstractmethod
+from typing import Any, Dict
 
 try:
     from langgraph.graph import END, START, StateGraph
@@ -9,35 +9,42 @@ except Exception:  # pragma: no cover
     StateGraph = None
 
 
-@dataclass
-class GraphRunnable:
-    name: str
-    graph: Any
+class BaseHPTMethodGraph(ABC):
+    """ABC for one HPT method graph (one class per method)."""
+
+    def __init__(self, name: str):
+        self.name = name
+        self._graph = self._compile_graph()
+
+    def _compile_graph(self):
+        if StateGraph is None:  # pragma: no cover
+            class _FallbackGraph:
+                def __init__(self, owner):
+                    self.owner = owner
+
+                def invoke(self, state: Dict[str, Any]):
+                    ctx = state["ctx"]
+                    return {"ctx": ctx, "result": self.owner.execute(ctx)}
+
+            return _FallbackGraph(self)
+
+        workflow = StateGraph(dict)
+        workflow.add_node("execute", self._execute_node)
+        workflow.add_edge(START, "execute")
+        workflow.add_edge("execute", END)
+        return workflow.compile(name=f"hpt-{self.name}-graph")
+
+    def _execute_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        ctx = state["ctx"]
+        return {"ctx": ctx, "result": self.execute(ctx)}
+
+    @abstractmethod
+    def execute(self, context: Any):
+        """Run one full optimization workflow for this method."""
 
     def run(self, context: Any):
-        result = self.graph.invoke({"ctx": context})
+        result = self._graph.invoke({"ctx": context})
         return result["result"]
-
-
-def build_single_node_graph(name: str, run_fn: Callable[[Any], Any]) -> GraphRunnable:
-    """Build a langgraph with START -> run_node -> END for one search method."""
-
-    def run_node(state: Dict[str, Any]) -> Dict[str, Any]:
-        ctx = state["ctx"]
-        return {"ctx": ctx, "result": run_fn(ctx)}
-
-    if StateGraph is None:  # lightweight fallback if langgraph is unavailable
-        class _FallbackGraph:
-            def invoke(self, state):
-                return run_node(state)
-
-        return GraphRunnable(name=name, graph=_FallbackGraph())
-
-    workflow = StateGraph(dict)
-    workflow.add_node("run_node", run_node)
-    workflow.add_edge(START, "run_node")
-    workflow.add_edge("run_node", END)
-    return GraphRunnable(name=name, graph=workflow.compile())
 
 
 class HPTWorkflowBase:
@@ -53,7 +60,7 @@ class HPTWorkflowBase:
         self.T_rep = T_rep
         self.verbose = verbose
         self.bounds = bounds
-        self.graphs: Dict[str, GraphRunnable] = {}
+        self.graphs: Dict[str, BaseHPTMethodGraph] = {}
 
     def run(self):
         if self.method not in self.graphs:
