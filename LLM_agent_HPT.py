@@ -13,6 +13,55 @@ from tqdm import trange  # 进度条工具（重复导入，保留原逻辑）
 from botorch.acquisition import UpperConfidenceBound  # UCB 采集函数
 from helper_func import *  # 引入项目内工具函数
 
+
+def build_model_description_card(func_desc, num_points):
+    """构建统一的模型描述卡（供提示词复用）。"""
+    card = {
+        "task": "hyperparameter_tuning_for_regression",
+        "metric": "mean_squared_error",
+        "model": func_desc.get("md_name"),
+        "dataset": {
+            "description": func_desc.get("data_desc"),
+            "num_samples": func_desc.get("data_nsamp"),
+            "num_features": func_desc.get("data_nfeature"),
+            "feature_type": "continuous",
+        },
+        "search_space": func_desc.get("md_param"),
+        "dimension": func_desc.get("md_ndim"),
+        "num_points": num_points,
+        "output_schema": {
+            "hyper_results": "list[list[number]]"
+        },
+    }
+    return json.dumps(card, ensure_ascii=False, indent=2)
+
+
+def build_warmstart_prompt(func_desc, num_points):
+    """构建 warm-start 提示词（要求稳定 JSON 输出）。"""
+    model_card = build_model_description_card(func_desc, num_points)
+    return f"""
+You are an AI assistant that helps tune ML hyperparameters to reduce MSE.
+
+Model Card:
+{model_card}
+
+Generate {num_points} diverse and strong candidate configurations within the search space.
+Return strictly valid JSON and nothing else.
+Use this exact schema:
+{{
+  "hyper_results": [
+    [v11, v12, ...],
+    [v21, v22, ...]
+  ]
+}}
+
+Hard constraints:
+1) Every vector must have exactly {func_desc['md_ndim']} dimensions.
+2) Every value must be numeric.
+3) Every value must be within the specified range/type constraints.
+4) No markdown, no code fences, no explanation text.
+"""
+
 # functions used to make LLAMBO parallelly
 def _sample_one_candidate_HPT(args):
     """注释：根据历史超参表现生成新候选配置。"""
@@ -195,20 +244,13 @@ class LLAMAGENT_HPT:
         if objective_function is None:  # 需要目标函数
             raise ValueError("Objective function must be provided for warm-starting.")
 
-        prompt = f"""  # 构造 warm-start 提示词
-        You are assisting with automated hyperparameter tuning using {self.func_desc['md_name']} for a regression task. {self.func_desc['data_desc']}
-        Model performance is evaluated using mean square error.
-        The following hyperparameters are tunable: {self.func_desc['md_param']}. 
-
-        Please suggest {self.func_desc['md_ndim']} diverse yet effective configurations to initiate a Bayesian Optimization process for hyperparameter tuning. 
-        **Format your response strictly as a JSON array** of {self.func_desc['md_ndim']}-dimensional numerical vectors (lists). 
-        Do not include explanations, comments, or any extra text outside the JSON. The output must be strictly valid JSON.
-        """
+        prompt = build_warmstart_prompt(self.func_desc, self.func_desc["md_ndim"])
 
         while True:  # 直到解析成功
             llm_output = self.query_llm(prompt)  # 调用 LLM
             try:  # 捕获 JSON 解析错误
-                warmstart_points = json.loads(llm_output)  # 解析点集
+                parsed = json.loads(llm_output)  # 解析点集
+                warmstart_points = parsed.get("hyper_results", parsed) if isinstance(parsed, dict) else parsed
                 if isinstance(warmstart_points, list) and all(  # 校验维度
                     isinstance(x, list) and len(x) == self.func_desc["md_ndim"] for x in warmstart_points
                 ):
@@ -337,21 +379,13 @@ class LLAMAGENT_L_HPT:
         if objective_function is None:  # 需要目标函数
             raise ValueError("Objective function must be provided for warm-starting.")
 
-        prompt = f"""  # 构造 warm-start 提示词
-        You are assisting with automated hyperparameter tuning using {self.func_desc['md_name']} for a regression task. {self.func_desc['data_desc']}
-        Model performance is evaluated using mean square error (MSE).
-        The dataset contains {self.func_desc['data_nsamp']} samples and {self.func_desc['data_nfeature']} continuous features. 
-        The following hyperparameters are tunable: {self.func_desc['md_param']}. 
-
-        Please suggest {self.func_desc['md_ndim']} diverse yet effective configurations to initiate a Bayesian Optimization process for hyperparameter tuning. 
-        Format your response strictly as a JSON array of {self.func_desc['md_ndim']}-dimensional numerical vectors (lists). 
-        Do not include explanations, comments, or any extra text outside the JSON.
-        """
+        prompt = build_warmstart_prompt(self.func_desc, self.func_desc["md_ndim"])
         
         while True:  # 直到解析成功
             llm_output = self.query_llm(prompt)  # 调用 LLM
             try:  # 捕获 JSON 解析错误
-                warmstart_points = json.loads(llm_output)  # 解析点集
+                parsed = json.loads(llm_output)  # 解析点集
+                warmstart_points = parsed.get("hyper_results", parsed) if isinstance(parsed, dict) else parsed
                 if isinstance(warmstart_points, list) and all(  # 校验维度
                     isinstance(x, list) and len(x) == self.func_desc["md_ndim"] for x in warmstart_points
                 ):
