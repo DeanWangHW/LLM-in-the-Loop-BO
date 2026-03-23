@@ -15,7 +15,21 @@ from hpt_search_graphs.base import HPTWorkflowBase
 class LLMIBO_HPT_ZH(HPTWorkflowBase):
     """HPT 主入口：每个搜索方法由独立 langgraph 运行。"""
 
-    def __init__(self, method, bounds, objective, dim, desc, T=20, T_ini=None, T_rep=1, verbose=True):
+    def __init__(
+        self,
+        method,
+        bounds,
+        objective,
+        dim,
+        desc,
+        T=20,
+        T_ini=None,
+        T_rep=1,
+        verbose=True,
+        seed=None,
+        max_retries=5,
+        initial_history=None,
+    ):
         super().__init__(
             method=method,
             bounds=bounds,
@@ -26,6 +40,9 @@ class LLMIBO_HPT_ZH(HPTWorkflowBase):
             T_ini=T_ini,
             T_rep=T_rep,
             verbose=verbose,
+            seed=seed,
+            max_retries=max_retries,
+            initial_history=initial_history,
         )
         self.graphs = {
             "rs": build_rs_graph(),

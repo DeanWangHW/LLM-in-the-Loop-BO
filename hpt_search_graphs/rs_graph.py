@@ -1,32 +1,21 @@
-import numpy as np
 import torch
-from tqdm import trange
 
 from helper_func import generate_ini_data
 
-from .base import BaseHPTMethodGraph
+from .base import BaseHPTMethodGraph, HPTGraphConfig, HPTGraphState
 
 
 class RSGraph(BaseHPTMethodGraph):
     def __init__(self):
         super().__init__(name="rs")
 
-    def execute(self, context):
-        regrets, histories = [], []
-        for _ in trange(context.T_rep, desc="RANDOM", disable=not context.verbose):
-            history = generate_ini_data(func=context.obj, n=context.T_ini, bounds=context.bounds)
-            regret = [np.min([y for _, y in history])]
-            for _ in range(context.T):
-                x = torch.rand(context.dim)
-                x = context.bounds[0] + (context.bounds[1] - context.bounds[0]) * x
-                x = x.tolist()
-                y = context.obj(x)
-                history.append((tuple(x), y))
-                regret.append(np.min([y for _, y in history]))
+    def initialize_history(self, config: HPTGraphConfig):
+        return generate_ini_data(func=config.objective, n=config.T_ini, bounds=config.bounds)
 
-            regrets.append(regret)
-            histories.append(history)
-        return histories, np.array(regrets)
+    def propose_candidate(self, config: HPTGraphConfig, state: HPTGraphState):
+        x = torch.rand(config.dim)
+        x = config.bounds[0] + (config.bounds[1] - config.bounds[0]) * x
+        return x.tolist(), "random", {}
 
 
 def build_rs_graph():

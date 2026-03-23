@@ -198,9 +198,9 @@ class LLAMAGENT_HPT:
     
     def sample_candidate_points(self):
         """注释：并行采样候选超参数配置。"""
-        best_y = max(self.history, key=lambda x: x[1])[1]  # 历史最佳（最小 MSE）
-        worst_y = min(self.history, key=lambda x: x[1])[1]  # 历史最差
-        target_score = best_y - self.alpha * (best_y - worst_y)  # 目标分数
+        best_y = min(self.history, key=lambda x: x[1])[1]  # 历史最佳（最小 MSE）
+        worst_y = max(self.history, key=lambda x: x[1])[1]  # 历史最差
+        target_score = best_y - self.alpha * (worst_y - best_y)  # 更低目标分数
 
         permuted_histories = []  # 存储打乱历史
 
@@ -239,12 +239,12 @@ class LLAMAGENT_HPT:
 
         return candidates  # 返回候选配置
 
-    def llm_warmstarting(self, objective_function=None):
+    def llm_warmstarting(self, num_warmstart=1, objective_function=None):
         """注释：生成初始超参配置并评估。"""
         if objective_function is None:  # 需要目标函数
             raise ValueError("Objective function must be provided for warm-starting.")
 
-        prompt = build_warmstart_prompt(self.func_desc, self.func_desc["md_ndim"])
+        prompt = build_warmstart_prompt(self.func_desc, num_warmstart)
 
         while True:  # 直到解析成功
             llm_output = self.query_llm(prompt)  # 调用 LLM
@@ -265,7 +265,7 @@ class LLAMAGENT_HPT:
         if not self.history:  # 没有历史则返回空
             return None
 
-        best_so_far = max(self.history, key=lambda x: x[1])[1]  # 当前最佳（最小 MSE）
+        best_so_far = min(self.history, key=lambda x: x[1])[1]  # 当前最佳（最小 MSE）
         candidates_nontuple = self.sample_candidate_points()  # 采样候选
         candidates = []  # 标准化后的候选列表
         for item in candidates_nontuple:  # 统一格式
@@ -379,7 +379,7 @@ class LLAMAGENT_L_HPT:
         if objective_function is None:  # 需要目标函数
             raise ValueError("Objective function must be provided for warm-starting.")
 
-        prompt = build_warmstart_prompt(self.func_desc, self.func_desc["md_ndim"])
+        prompt = build_warmstart_prompt(self.func_desc, num_warmstart)
         
         while True:  # 直到解析成功
             llm_output = self.query_llm(prompt)  # 调用 LLM
