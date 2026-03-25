@@ -2,16 +2,21 @@ from __future__ import annotations
 
 import json
 import pathlib
+import sys
 from typing import Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
-from .configuration import SystemConfig
-from .graph import run_once, stream_run_events
-from .plugin_loader import register_task_from_files
-from .storage import TaskStorage
+_SRC_ROOT = pathlib.Path(__file__).resolve().parents[1]
+if str(_SRC_ROOT) not in sys.path:
+    sys.path.insert(0, str(_SRC_ROOT))
+
+from hpt_agent.configuration import SystemConfig
+from hpt_agent.graph import run_once, stream_run_events
+from hpt_agent.plugin_loader import register_task_from_files
+from hpt_agent.storage import TaskStorage
 
 app = FastAPI(title="LangGraph HPT Backend")
 

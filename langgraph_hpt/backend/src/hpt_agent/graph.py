@@ -1,15 +1,21 @@
 from __future__ import annotations
 
+import pathlib
+import sys
 from typing import Any, Dict, Iterable
 
 import numpy as np
 
-from .configuration import RunConfig, SystemConfig
-from .objective_runner import evaluate_objective
-from .optimizers import HEBOAdapter, LegacyAdapter
-from .plugin_loader import validate_task_entrypoint
-from .search_space import parse_search_space
-from .storage import TaskStorage
+_SRC_ROOT = pathlib.Path(__file__).resolve().parents[1]
+if str(_SRC_ROOT) not in sys.path:
+    sys.path.insert(0, str(_SRC_ROOT))
+
+from hpt_agent.configuration import RunConfig, SystemConfig
+from hpt_agent.objective_runner import evaluate_objective
+from hpt_agent.optimizers import HEBOAdapter, LegacyAdapter
+from hpt_agent.plugin_loader import validate_task_entrypoint
+from hpt_agent.search_space import parse_search_space
+from hpt_agent.storage import TaskStorage
 
 try:  # pragma: no cover - optional dependency
     from langgraph.graph import END, START, StateGraph
