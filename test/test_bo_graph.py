@@ -31,3 +31,4 @@ def test_bo_graph(monkeypatch):
     histories, regrets = graph.run(Ctx())
     assert len(histories[0]) == 2
     assert regrets.shape == (1, 2)
+
