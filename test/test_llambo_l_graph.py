@@ -1,6 +1,7 @@
 import pytest
 
 pytest.importorskip("torch")
+import torch
 
 from hpt_search_graphs.llambo_l_graph import build_llambo_l_graph
 
@@ -23,6 +24,7 @@ class Ctx:
     dim = 2
     verbose = False
     desc = {}
+    bounds = (torch.tensor([0.0, 0.0], dtype=torch.float64), torch.tensor([1.0, 1.0], dtype=torch.float64))
 
     @staticmethod
     def obj(x):
