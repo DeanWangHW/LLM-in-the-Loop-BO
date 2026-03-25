@@ -1,0 +1,30 @@
+{
+  "parameters": [
+    {
+      "name": "lr",
+      "type": "float",
+      "lb": 0.0005,
+      "ub": 0.05
+    },
+    {
+      "name": "num_layers",
+      "type": "int",
+      "lb": 1,
+      "ub": 8
+    },
+    {
+      "name": "use_dropout",
+      "type": "bool"
+    },
+    {
+      "name": "activation",
+      "type": "categorical",
+      "choices": ["relu", "gelu", "tanh"]
+    },
+    {
+      "name": "batch_mode",
+      "type": "categorical",
+      "choices": ["small", "medium", "large"]
+    }
+  ]
+}

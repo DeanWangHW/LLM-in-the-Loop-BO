@@ -30,7 +30,7 @@ def health():
 
 
 @app.post("/hpt/tasks/register")
-async def register_task(
+def register_task(
     plugin_file: UploadFile = File(...),
     search_space_file: UploadFile = File(...),
     task_name: Optional[str] = Form(default=None),
@@ -39,10 +39,10 @@ async def register_task(
     try:
         plugin_tmp = _system.storage_root / f"tmp_{plugin_file.filename}"
         plugin_tmp.parent.mkdir(parents=True, exist_ok=True)
-        plugin_tmp.write_bytes(await plugin_file.read())
+        plugin_tmp.write_bytes(plugin_file.file.read())
 
         space_tmp = _system.storage_root / f"tmp_{search_space_file.filename}"
-        space_tmp.write_bytes(await search_space_file.read())
+        space_tmp.write_bytes(search_space_file.file.read())
         json.loads(space_tmp.read_text(encoding="utf-8"))
 
         task_id = register_task_from_files(

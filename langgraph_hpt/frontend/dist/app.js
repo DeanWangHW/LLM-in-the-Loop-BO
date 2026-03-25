@@ -7,10 +7,37 @@ const phaseEl = document.getElementById('phase');
 const bestValueEl = document.getElementById('best-value');
 const iterInfoEl = document.getElementById('iter-info');
 const fetchTaskBtn = document.getElementById('fetch-task-btn');
+const MAX_LOG_LINES = 400;
+const eventLines = [];
+
+function summarizePayloadForLog(payload) {
+  if (!payload || typeof payload !== 'object') return payload;
+  const view = { ...payload };
+  if (view.result && typeof view.result === 'object') {
+    const histories = Array.isArray(view.result.histories) ? view.result.histories : [];
+    const regrets = Array.isArray(view.result.regrets) ? view.result.regrets : [];
+    view.result = {
+      summary: true,
+      histories_count: histories.length,
+      first_history_len: Array.isArray(histories[0]) ? histories[0].length : 0,
+      regrets_rows: regrets.length,
+      regrets_cols: Array.isArray(regrets[0]) ? regrets[0].length : 0,
+    };
+  }
+  if (typeof view.error === 'string' && view.error.length > 500) {
+    view.error = `${view.error.slice(0, 500)}...`;
+  }
+  return view;
+}
 
 function appendEvent(obj) {
   const now = new Date().toLocaleTimeString();
-  eventsBox.textContent += `[${now}] ${JSON.stringify(obj)}\n`;
+  const safeObj = summarizePayloadForLog(obj);
+  eventLines.push(`[${now}] ${JSON.stringify(safeObj)}`);
+  if (eventLines.length > MAX_LOG_LINES) {
+    eventLines.splice(0, eventLines.length - MAX_LOG_LINES);
+  }
+  eventsBox.textContent = `${eventLines.join('\n')}\n`;
   eventsBox.scrollTop = eventsBox.scrollHeight;
 }
 
@@ -89,6 +116,7 @@ function updateStats(payload) {
 
 async function runStream(evt) {
   evt.preventDefault();
+  eventLines.length = 0;
   eventsBox.textContent = '';
   bestValueEl.textContent = '-';
   phaseEl.textContent = 'starting';

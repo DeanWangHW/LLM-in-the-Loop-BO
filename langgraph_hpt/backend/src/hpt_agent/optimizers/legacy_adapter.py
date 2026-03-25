@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import dataclasses
+import pathlib
 import random
+import sys
 from typing import Any, Dict, List, Tuple
 
 from .base import OptimizerAdapter
@@ -12,27 +13,45 @@ try:  # pragma: no cover - optional dependency path
 except Exception:  # pragma: no cover
     torch = None
 
-from hpt_search_graphs import (
-    build_bo_graph,
-    build_constrained_graph,
-    build_justify_graph,
-    build_llambo_graph,
-    build_llambo_l_graph,
-    build_rs_graph,
-    build_transient_graph,
-)
-from hpt_search_graphs.base import HPTGraphConfig, HPTGraphState
-
-
-GRAPH_BUILDERS = {
-    "rs": build_rs_graph,
-    "bo": build_bo_graph,
-    "llambo": build_llambo_graph,
-    "llambo_l": build_llambo_l_graph,
-    "transient": build_transient_graph,
-    "justify": build_justify_graph,
-    "constrained": build_constrained_graph,
+LEGACY_METHODS = {
+    "rs",
+    "bo",
+    "llambo",
+    "llambo_l",
+    "transient",
+    "justify",
+    "constrained",
 }
+
+
+def _ensure_legacy_graph_path() -> None:
+    """Ensure repository root is importable for hpt_search_graphs."""
+    repo_root = pathlib.Path(__file__).resolve().parents[5]
+    if (repo_root / "hpt_search_graphs").is_dir() and str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+
+
+def _load_legacy_graph_components():
+    _ensure_legacy_graph_path()
+    from hpt_search_graphs import (
+        build_bo_graph,
+        build_constrained_graph,
+        build_justify_graph,
+        build_llambo_graph,
+        build_llambo_l_graph,
+        build_transient_graph,
+    )
+    from hpt_search_graphs.base import HPTGraphConfig, HPTGraphState
+
+    graph_builders = {
+        "bo": build_bo_graph,
+        "llambo": build_llambo_graph,
+        "llambo_l": build_llambo_l_graph,
+        "transient": build_transient_graph,
+        "justify": build_justify_graph,
+        "constrained": build_constrained_graph,
+    }
+    return graph_builders, HPTGraphConfig, HPTGraphState
 
 
 class LegacyAdapter(OptimizerAdapter):
@@ -47,14 +66,21 @@ class LegacyAdapter(OptimizerAdapter):
     ):
         super().__init__()
         self.method = method.lower()
-        if self.method not in GRAPH_BUILDERS:
+        if self.method not in LEGACY_METHODS:
             raise ValueError(f"Unknown legacy method: {method}")
         self.search_space = list(search_space)
         self.desc = desc or {}
         self.rng = random.Random(seed)
         self.max_retries = max_retries
-        self._graph = GRAPH_BUILDERS[self.method]()
-        self._base_config: HPTGraphConfig | None = None
+        self._graph = None
+        self._graph_config_cls = None
+        self._graph_state_cls = None
+        if self.method != "rs":
+            graph_builders, hpt_graph_config_cls, hpt_graph_state_cls = _load_legacy_graph_components()
+            self._graph = graph_builders[self.method]()
+            self._graph_config_cls = hpt_graph_config_cls
+            self._graph_state_cls = hpt_graph_state_cls
+        self._base_config: Any = None
 
     @property
     def _is_numeric(self) -> bool:
@@ -93,7 +119,10 @@ class LegacyAdapter(OptimizerAdapter):
         def objective_list(values: List[float]) -> float:
             return float(evaluate_fn(self._vector_to_params(values)))
 
-        config = HPTGraphConfig(
+        if self._graph_config_cls is None:
+            raise RuntimeError("Legacy graph config class is not initialized.")
+
+        config = self._graph_config_cls(
             method=self.method,
             bounds=(lower, upper),
             objective=objective_list,
@@ -124,9 +153,11 @@ class LegacyAdapter(OptimizerAdapter):
 
         if self._base_config is None:
             raise RuntimeError("LegacyAdapter must be warmstarted before suggest().")
+        if self._graph_state_cls is None:
+            raise RuntimeError("Legacy graph state class is not initialized.")
 
         old_history = [(self._params_to_vector(p), float(v)) for p, v in history]
-        old_state = HPTGraphState(
+        old_state = self._graph_state_cls(
             config=self._base_config,
             rep_idx=0,
             iter_idx=int(iter_idx),
@@ -137,4 +168,3 @@ class LegacyAdapter(OptimizerAdapter):
         candidate, source, diagnostics = self._graph.propose_candidate(self._base_config, old_state)
         params = self._vector_to_params(list(candidate))
         return params, source, diagnostics
-

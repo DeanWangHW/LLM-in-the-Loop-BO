@@ -12,7 +12,7 @@ if str(_SRC_ROOT) not in sys.path:
 
 from hpt_agent.configuration import RunConfig, SystemConfig
 from hpt_agent.objective_runner import evaluate_objective
-from hpt_agent.optimizers import HEBOAdapter, LegacyAdapter
+from hpt_agent.optimizers.hebo_adapter import HEBOAdapter
 from hpt_agent.plugin_loader import validate_task_entrypoint
 from hpt_agent.search_space import parse_search_space
 from hpt_agent.storage import TaskStorage
@@ -140,6 +140,8 @@ class HPTBackendWorkflow:
         run_config: RunConfig = state["run_config"]
         if run_config.method == "hebo":
             return HEBOAdapter(state["search_space"], seed=run_config.seed)
+        from hpt_agent.optimizers.legacy_adapter import LegacyAdapter
+
         return LegacyAdapter(
             method=run_config.method,
             search_space=state["search_space"],

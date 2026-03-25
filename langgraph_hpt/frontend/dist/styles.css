@@ -9,6 +9,10 @@
 }
 
 * { box-sizing: border-box; }
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+}
 body {
   margin: 0;
   font-family: 'IBM Plex Sans', sans-serif;
@@ -17,10 +21,14 @@ body {
 }
 .shell {
   max-width: 1080px;
+  width: 100%;
   margin: 0 auto;
   padding: 24px 16px 56px;
   display: grid;
   gap: 16px;
+}
+.shell > * {
+  min-width: 0;
 }
 .hero {
   background: linear-gradient(120deg, #113f3a 0%, #0f766e 65%, #3aa89c 100%);
@@ -46,6 +54,8 @@ body {
   border-radius: 16px;
   padding: 16px;
   box-shadow: 0 8px 24px rgba(32, 42, 39, .08);
+  min-width: 0;
+  overflow: hidden;
 }
 .panel h2 {
   margin: 0 0 12px;
@@ -122,6 +132,13 @@ button.ghost {
   font-family: ui-monospace, Menlo, Monaco, monospace;
   font-size: 12px;
   line-height: 1.5;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  overflow-x: auto;
 }
 .log {
   min-height: 180px;
