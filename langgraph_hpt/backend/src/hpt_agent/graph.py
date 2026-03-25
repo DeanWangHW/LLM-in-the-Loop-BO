@@ -304,3 +304,48 @@ class _FallbackGraph:
 
 
 graph = HPTBackendWorkflow().graph
+
+
+def _jsonable_result(result):
+    histories, regrets = result
+    return {
+        "histories": histories,
+        "regrets": np.asarray(regrets, dtype=float).tolist(),
+    }
+
+
+def run_once(payload: Dict[str, Any]) -> Dict[str, Any]:
+    response = graph.invoke(payload)
+    result = response.get("result")
+    if result is None:
+        raise RuntimeError("Graph run did not return result.")
+    return _jsonable_result(result)
+
+
+def stream_run_events(payload: Dict[str, Any]) -> Iterable[Dict[str, Any]]:
+    for chunk in graph.stream(payload, stream_mode="updates"):
+        if not isinstance(chunk, dict):
+            continue
+        for node, update in chunk.items():
+            if not isinstance(update, dict):
+                continue
+            phase = update.get("phase", node)
+            event: Dict[str, Any] = {
+                "node": node,
+                "phase": phase,
+            }
+            for key in (
+                "status",
+                "task_id",
+                "rep_idx",
+                "iter_idx",
+                "candidate",
+                "candidate_source",
+                "candidate_value",
+                "best_value",
+            ):
+                if key in update:
+                    event[key] = update[key]
+            if "result" in update:
+                event["result"] = _jsonable_result(update["result"])
+            yield event

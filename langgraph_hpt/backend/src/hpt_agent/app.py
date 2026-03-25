@@ -5,10 +5,11 @@ import pathlib
 from typing import Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from .configuration import SystemConfig
+from .graph import run_once, stream_run_events
 from .plugin_loader import register_task_from_files
 from .storage import TaskStorage
 
@@ -72,6 +73,33 @@ def get_task(task_id: str):
         raise HTTPException(status_code=404, detail=str(exc))
 
 
+@app.post("/hpt/runs/invoke")
+def run_invoke(payload: dict):
+    try:
+        result = run_once(payload)
+        return JSONResponse(result)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.post("/hpt/runs/stream")
+def run_stream(payload: dict):
+    def event_gen():
+        try:
+            for event in stream_run_events(payload):
+                event_name = event.get("phase", "update")
+                yield (
+                    f"event: {event_name}\n"
+                    f"data: {json.dumps(event, ensure_ascii=False, default=str)}\n\n"
+                )
+            yield "event: done\ndata: {}\n\n"
+        except Exception as exc:
+            err = {"phase": "run_failed", "error": str(exc)}
+            yield f"event: run_failed\ndata: {json.dumps(err, ensure_ascii=False)}\n\n"
+
+    return StreamingResponse(event_gen(), media_type="text/event-stream")
+
+
 def create_frontend_router(build_dir="../frontend/dist"):
     build_path = pathlib.Path(__file__).parent.parent.parent / build_dir
     if not build_path.is_dir() or not (build_path / "index.html").is_file():
@@ -90,4 +118,3 @@ def create_frontend_router(build_dir="../frontend/dist"):
 
 
 app.mount("/app", create_frontend_router(), name="frontend")
-
