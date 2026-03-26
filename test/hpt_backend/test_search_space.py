@@ -2,7 +2,15 @@ import sys
 from pathlib import Path
 
 
-BACKEND_SRC = Path(__file__).resolve().parents[2] / "langgraph_hpt" / "backend" / "src"
+ROOT = Path(__file__).resolve().parents[2]
+BACKEND_SRC_CANDIDATES = (
+    ROOT / "apps" / "langgraph_backend" / "src",
+    ROOT / "langgraph_hpt" / "backend" / "src",
+)
+BACKEND_SRC = next(
+    (path for path in BACKEND_SRC_CANDIDATES if path.exists()),
+    BACKEND_SRC_CANDIDATES[0],
+)
 if str(BACKEND_SRC) not in sys.path:
     sys.path.insert(0, str(BACKEND_SRC))
 
@@ -45,4 +53,3 @@ def test_to_hebo_design_space_maps_bool_to_cat():
     flag = next(item for item in hebo_space if item["name"] == "flag")
     assert flag["type"] == "cat"
     assert flag["categories"] == [False, True]
-

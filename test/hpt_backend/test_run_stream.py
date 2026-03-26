@@ -5,7 +5,15 @@ from pathlib import Path
 import numpy as np
 
 
-BACKEND_SRC = Path(__file__).resolve().parents[2] / "langgraph_hpt" / "backend" / "src"
+ROOT = Path(__file__).resolve().parents[2]
+BACKEND_SRC_CANDIDATES = (
+    ROOT / "apps" / "langgraph_backend" / "src",
+    ROOT / "langgraph_hpt" / "backend" / "src",
+)
+BACKEND_SRC = next(
+    (path for path in BACKEND_SRC_CANDIDATES if path.exists()),
+    BACKEND_SRC_CANDIDATES[0],
+)
 if str(BACKEND_SRC) not in sys.path:
     sys.path.insert(0, str(BACKEND_SRC))
 
@@ -71,4 +79,3 @@ def test_stream_run_events_has_core_phases_and_final_result(tmp_path: Path):
     assert "result" in final
     assert isinstance(final["result"]["regrets"], list)
     assert np.array(final["result"]["regrets"]).shape == (1, 3)
-

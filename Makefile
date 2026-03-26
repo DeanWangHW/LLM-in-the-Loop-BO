@@ -1,8 +1,8 @@
 .PHONY: test test-hpt-backend backend-dev frontend-dev
 
 PYTHON ?= python
-BACKEND_DIR := langgraph_hpt/backend
-FRONTEND_DIST := langgraph_hpt/frontend/dist
+BACKEND_DIR := apps/langgraph_backend
+FRONTEND_DIST := apps/frontend/dist
 
 test:
 	$(PYTHON) -m pytest

@@ -16,7 +16,7 @@ class SystemConfig:
     def from_env(cls) -> "SystemConfig":
         root = os.environ.get("HPT_STORAGE_ROOT")
         if root is None:
-            root = "langgraph_hpt/backend/.hpt_data"
+            root = "apps/langgraph_backend/.hpt_data"
         return cls(
             storage_root=Path(root).resolve(),
             max_parallel_runs=int(os.environ.get("HPT_MAX_PARALLEL_RUNS", "4")),
@@ -55,4 +55,3 @@ class RunConfig:
             desc=payload.get("desc"),
             storage_root=Path(storage_root).resolve() if storage_root else None,
         )
-

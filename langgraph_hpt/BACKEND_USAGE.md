@@ -1,6 +1,6 @@
 # LangGraph HPT Backend 使用说明
 
-本文档说明如何使用 `langgraph_hpt/backend` 的新实现完成：
+本文档说明如何使用 `apps/langgraph_backend` 的新实现完成：
 
 1. 上传目标函数插件（`.py`/`.zip`）和混合参数空间；
 2. 启动一次调参任务（同步或流式）；
@@ -11,19 +11,19 @@
 在项目根目录执行：
 
 ```bash
-python -m pip install -e langgraph_hpt/backend
+python -m pip install -e apps/langgraph_backend
 ```
 
 可选（使用 HEBO）：
 
 ```bash
-python -m pip install "langgraph_hpt/backend[hebo]"
+python -m pip install "apps/langgraph_backend[hebo]"
 ```
 
 推荐设置：
 
 ```bash
-export HPT_STORAGE_ROOT="$PWD/langgraph_hpt/backend/.hpt_data"
+export HPT_STORAGE_ROOT="$PWD/apps/langgraph_backend/.hpt_data"
 ```
 
 ## 2. 函数插件与参数空间格式
@@ -66,7 +66,7 @@ def objective(params: dict) -> float:
 ## 3. 启动后端服务
 
 ```bash
-cd langgraph_hpt/backend
+cd apps/langgraph_backend
 langgraph dev
 ```
 
@@ -172,4 +172,3 @@ SSE 事件包括：
 1. 上传任务；
 2. 选择方法与预算；
 3. 流式查看迭代事件与最优值。
-

@@ -41,6 +41,6 @@ htmlcov/
 !.env.example
 
 # LangGraph runtime artifacts
-langgraph_hpt/backend/.langgraph_api/
-langgraph_hpt/backend/.hpt_data/
-langgraph_hpt/backend/langgraph_hpt/
+apps/langgraph_backend/.langgraph_api/
+apps/langgraph_backend/.hpt_data/
+apps/langgraph_backend/langgraph_hpt/
