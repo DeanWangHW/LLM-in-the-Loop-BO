@@ -8,7 +8,7 @@ test:
 	$(PYTHON) -m pytest
 
 test-hpt-backend:
-	$(PYTHON) -m pytest test/hpt_backend -q
+	$(PYTHON) -m pytest tests/hpt_backend -q
 
 backend-dev:
 	cd $(BACKEND_DIR) && \
