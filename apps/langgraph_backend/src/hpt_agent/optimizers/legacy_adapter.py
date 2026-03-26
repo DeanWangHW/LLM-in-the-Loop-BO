@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 import pathlib
 import random
 import sys
@@ -7,11 +8,6 @@ from typing import Any, Dict, List, Tuple
 
 from .base import OptimizerAdapter
 from ..search_space import sample_random_params
-
-try:  # pragma: no cover - optional dependency path
-    import torch
-except Exception:  # pragma: no cover
-    torch = None
 
 LEGACY_METHODS = {
     "rs",
@@ -52,6 +48,14 @@ def _load_legacy_graph_components():
         "constrained": build_constrained_graph,
     }
     return graph_builders, HPTGraphConfig, HPTGraphState
+
+
+def _load_torch():
+    """Load torch lazily so RS mode does not depend on torch runtime."""
+    try:
+        return importlib.import_module("torch")
+    except Exception as exc:  # pragma: no cover - environment-dependent
+        raise ImportError("torch is required for legacy graph methods.") from exc
 
 
 class LegacyAdapter(OptimizerAdapter):
@@ -110,8 +114,7 @@ class LegacyAdapter(OptimizerAdapter):
 
         if not self._is_numeric:
             raise ValueError(f"Legacy method '{self.method}' only supports numeric parameters.")
-        if torch is None:
-            raise ImportError("torch is required for legacy graph methods.")
+        torch = _load_torch()
 
         lower = torch.tensor([spec["lb"] for spec in self.search_space], dtype=torch.float64)
         upper = torch.tensor([spec["ub"] for spec in self.search_space], dtype=torch.float64)
