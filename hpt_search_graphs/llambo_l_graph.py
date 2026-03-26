@@ -1,22 +1,13 @@
-from LLM_agent_HPT import LLAMAGENT_L_HPT
+"""Compatibility shim for legacy import path."""
 
-from .base import BaseHPTMethodGraph, HPTGraphConfig, HPTGraphState
+from __future__ import annotations
 
+import pathlib
+import sys
 
-class LLAMBOLGraph(BaseHPTMethodGraph):
-    def __init__(self):
-        super().__init__(name="llambo_l")
+_SRC_ROOT = pathlib.Path(__file__).resolve().parents[1] / "src"
+if str(_SRC_ROOT) not in sys.path:
+    sys.path.insert(0, str(_SRC_ROOT))
 
-    def initialize_history(self, config: HPTGraphConfig):
-        return LLAMAGENT_L_HPT([], func_desc=config.desc).llm_warmstarting(
-            num_warmstart=config.T_ini,
-            objective_function=config.objective,
-        )
+from llinbo.hpt_search_graphs.llambo_l_graph import *  # noqa: F401,F403
 
-    def propose_candidate(self, config: HPTGraphConfig, state: HPTGraphState):
-        candidate = LLAMAGENT_L_HPT(state.history, func_desc=config.desc).sample_candidate_points()
-        return candidate, "llm", {}
-
-
-def build_llambo_l_graph():
-    return LLAMBOLGraph()

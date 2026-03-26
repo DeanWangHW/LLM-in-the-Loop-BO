@@ -1,22 +1,13 @@
-import torch
+"""Compatibility shim for legacy import path."""
 
-from helper_func import generate_ini_data
+from __future__ import annotations
 
-from .base import BaseHPTMethodGraph, HPTGraphConfig, HPTGraphState
+import pathlib
+import sys
 
+_SRC_ROOT = pathlib.Path(__file__).resolve().parents[1] / "src"
+if str(_SRC_ROOT) not in sys.path:
+    sys.path.insert(0, str(_SRC_ROOT))
 
-class RSGraph(BaseHPTMethodGraph):
-    def __init__(self):
-        super().__init__(name="rs")
+from llinbo.hpt_search_graphs.rs_graph import *  # noqa: F401,F403
 
-    def initialize_history(self, config: HPTGraphConfig):
-        return generate_ini_data(func=config.objective, n=config.T_ini, bounds=config.bounds)
-
-    def propose_candidate(self, config: HPTGraphConfig, state: HPTGraphState):
-        x = torch.rand(config.dim)
-        x = config.bounds[0] + (config.bounds[1] - config.bounds[0]) * x
-        return x.tolist(), "random", {}
-
-
-def build_rs_graph():
-    return RSGraph()
